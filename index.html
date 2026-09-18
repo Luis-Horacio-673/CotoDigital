@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Verificador y Carrito</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="html5-qrcode.min.js"></script>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; padding: 12px; padding-bottom: 95px; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
@@ -18286,6 +18286,11 @@
       const container = document.getElementById('reader-container');
       if (container && container.style.display === 'none') return;
 
+      if (typeof Html5Qrcode === 'undefined') {
+        actualizarMensajeCamara("⚠️ Librería de cámara no disponible. Recarga la página.");
+        return;
+      }
+
       solicitarWakeLock();
       actualizarMensajeCamara("Iniciando cámara...");
 
@@ -18317,6 +18322,18 @@
       actualizarMensajeCamara("🔄 Restableciendo cámara...");
 
       try {
+        // Liberar explícitamente pistas de video a nivel hardware
+        const videoEl = document.querySelector('#reader video');
+        if (videoEl && videoEl.srcObject) {
+          const stream = videoEl.srcObject;
+          if (typeof stream.getTracks === 'function') {
+            stream.getTracks().forEach(track => {
+              try { track.stop(); } catch (e) {}
+            });
+          }
+          videoEl.srcObject = null;
+        }
+
         if (html5QrCode) {
           try { await html5QrCode.stop(); } catch (e) {}
           try { html5QrCode.clear(); } catch (e) {}
